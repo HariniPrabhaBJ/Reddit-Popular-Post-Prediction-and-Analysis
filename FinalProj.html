@@ -1,0 +1,1199 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html><head></head><body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div>
+
+
+
+<h1 class="title toc-ignore">Reddit Popular Post Prediction and
+Analysis</h1>
+<h4 class="author">Harini - Salma - Prathyusha</h4>
+<h4 class="date">2022-12-07</h4>
+
+</div>
+
+
+<div class="section level1">
+<h1>TEAM MEMBERS:</h1>
+<ol style="list-style-type: decimal;">
+<li>Prathyusha Parimi</li>
+<li>Salma Chanbasha Nandikotkur</li>
+<li>Harini Prabha Baskar Jayanthi</li>
+</ol>
+</div>
+<div class="section level1">
+<h1>BUISNESS CONTEXT:</h1>
+<p>Reddit is an American Social news Aggregation, content rating and
+discussion websites. Registered users (commonly referred to as
+“Redditors”) submit content to the site such as links, text posts,
+images, and videos, which are then voted up or down by other members.
+Posts are organized by subject into user-created boards called
+“communities” or “subreddits”. Submissions with more upvotes appear
+towards the top of their subreddit and, if they receive enough
+upvotes,their post ultimately shows on the site’s front page.</p>
+<p>The Reddit Data API lets you incorporate Reddit functionality into
+your own application. You can use the API to fetch the search results of
+users and post content.</p>
+</div>
+<div class="section level1">
+<h1>PROBLEM DESCRIPTION:</h1>
+<p>Reddit is a highly visited site, the popular posts on the site can be
+seen by a lot of people. Similar to other platforms reddit has a unique
+algorithm for ranking posts. The higher a post ranks the more people it
+will be seen by and the more popular it becomes.</p>
+<p>By doing textual analysis we have analyzed what makes a post popular,
+and see if we can predict whether the posts will become popular or not
+based on their title, comments and upvotes.</p>
+<p>This project is interesting because, people’s opinion on social media
+has a huge impact on our society today, viral posts and trending topics
+can influence public opinion.</p>
+</div>
+<div class="section level1">
+<h1>PROJECT FLOW:</h1>
+</div>
+<div class="section level1">
+<h1>STEP 1: INCLUDING LIBRARIES:</h1>
+<pre class="r"><code>library(keras)
+library(reticulate)
+library(dplyr)
+library(ggplot2)
+library(purrr)
+library(readr)
+library(data.table)
+library(tidyverse)
+library(stringr)
+library(knitr)
+library(kableExtra)
+library(magrittr)
+library(&quot;readxl&quot;)
+library(tensorflow)</code></pre>
+</div>
+<div class="section level1">
+<h1>STEP 2: DATASET DESCRIPTION:</h1>
+<p>Link to csv files: <a rel="noopener" href="https://drive.google.com/drive/folders/17fV6YEcqwpexNeCGEseV8T-ZbXBk1f_v?usp=share_link" class="uri">https://drive.google.com/drive/folders/17fV6YEcqwpexNeCGEseV8T-ZbXBk1f_v?usp=share_link</a></p>
+<p>We used the Reddit API along with the R wrapper: RedditExtractoR, to
+scrape our data. We mainly scraped data from different subreddits:
+r/AskReddit, r/movies, r/todayilearned, r/gaming, r/Art, r/aww/,
+r/books, r/Earth, r/explainlikeimfive, r/funny, r/gadgets, r/gaming,
+r/gifs, r/IAma, r/Jokes, r/LifeProTips, r/mildlyinteresting, r/news,
+r/nottheonion, r/pics, r/science, r/Showerthoughts, r/space, r/sports.We
+have scraped 20460 records and we have 15 columns.</p>
+<p>*URL: This column consists of endpoints of subreddit.</p>
+<p>*Author: The author of the post</p>
+<p>*Date: The day the post is uploaded</p>
+<p>*Timestamp: The time the post is uploaded.</p>
+<p>*Title: This column depicts the title of the post</p>
+<p>*Text: It depicts the text of the post</p>
+<p>*Subreddit: It consists of subreddit topics</p>
+<p>*Score: A comment’s score is simply the number of upvotes minus the
+number of downvotes.</p>
+<p>*Upvotes: The website Reddit by which users can signal their approval
+or support for a post</p>
+<p>*Downvotes: A downvote is an action that a user can take on the
+Reddit website (and in some other user interfaces) that is used to
+signal disapproval or try to downgrade a post and its content.</p>
+<p>*UpRatio: Up ratio of the posts</p>
+<p>*TotalAwardsReceived: Redditors give each other awards as a way to
+recognize and react to each other’s contributions</p>
+<p>*Golds: This is the middle level award and likely the most popular.
+In addition to showing a Gold Award badge next to the comment or
+submissions</p>
+<p>*CrossPosts: When you crosspost content, the crosspost includes an
+embed of the original post, along with the username, community, and
+score on the original post. This gives your fellow redditors a way to
+find the original source of the content while also providing ways to get
+more exposure for the original content and the community it was posted
+in</p>
+<p>*Comments: Feelings of a viewer about the particular post.</p>
+</div>
+<div class="section level1">
+<h1>IMPORTING CSV:</h1>
+<pre class="r"><code>raw_data&lt;- read_csv(&quot;FinalDataset1.csv&quot;)
+temp&lt;-iconv(raw_data, &quot;latin1&quot;, &quot;ASCII&quot;, sub=&quot;&quot;)
+nrow(raw_data)</code></pre>
+<pre><code>## [1] 20459</code></pre>
+</div>
+<div class="section level1">
+<h1>Overview of the dataset.</h1>
+<pre class="r"><code>kbl(raw_data[1:5,]) %&gt;%
+
+  kable_material_dark(&quot;hover&quot;,bootstrap_options = &quot;striped&quot;, full_width = F)</code></pre>
+<table class="lightable-material-dark lightable-hover" style="font-family: &quot;Source Sans Pro&quot;, helvetica, sans-serif;width: auto !important;margin-left: auto;margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+URL
+</th>
+<th style="text-align:left;">
+Author
+</th>
+<th style="text-align:left;">
+Date
+</th>
+<th style="text-align:right;">
+Timestamp
+</th>
+<th style="text-align:left;">
+Title
+</th>
+<th style="text-align:left;">
+Text
+</th>
+<th style="text-align:left;">
+Subreddit
+</th>
+<th style="text-align:right;">
+Score
+</th>
+<th style="text-align:right;">
+Upvotes
+</th>
+<th style="text-align:right;">
+Downvotes
+</th>
+<th style="text-align:right;">
+Up_ratio
+</th>
+<th style="text-align:right;">
+Total_awards_received
+</th>
+<th style="text-align:right;">
+Golds
+</th>
+<th style="text-align:right;">
+Cross_posts
+</th>
+<th style="text-align:right;">
+Comments
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+<a rel="noopener" href="https://www.reddit.com/r/AskReddit/comments/z3ke98/if_a_man_or_women_proposes_to_their_partner_and/" class="uri">https://www.reddit.com/r/AskReddit/comments/z3ke98/if_a_man_or_women_proposes_to_their_partner_and/</a>
+</td>
+<td style="text-align:left;">
+BaIIZDeepInUrMom
+</td>
+<td style="text-align:left;">
+11/24/2022
+</td>
+<td style="text-align:right;">
+1669297614
+</td>
+<td style="text-align:left;">
+If a man or women proposes to their partner, and they say no, where does
+the relationship go from there?
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+AskReddit
+</td>
+<td style="text-align:right;">
+31
+</td>
+<td style="text-align:right;">
+31
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.81
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+66
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a rel="noopener" href="https://www.reddit.com/r/AskReddit/comments/yze4oh/whats_the_next_common_everyday_thing_society_will/" class="uri">https://www.reddit.com/r/AskReddit/comments/yze4oh/whats_the_next_common_everyday_thing_society_will/</a>
+</td>
+<td style="text-align:left;">
+Independent-Choice-4
+</td>
+<td style="text-align:left;">
+11/19/2022
+</td>
+<td style="text-align:right;">
+1668870939
+</td>
+<td style="text-align:left;">
+Whats the next common, every-day thing society will realize is killing
+us (like how cigarettes were once deemed healthy) ?
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+AskReddit
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+172
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a rel="noopener" href="https://www.reddit.com/r/AskReddit/comments/yzc568/what_meal_traumatized_you_as_a_kid/" class="uri">https://www.reddit.com/r/AskReddit/comments/yzc568/what_meal_traumatized_you_as_a_kid/</a>
+</td>
+<td style="text-align:left;">
+LoneShark81
+</td>
+<td style="text-align:left;">
+11/19/2022
+</td>
+<td style="text-align:right;">
+1668865322
+</td>
+<td style="text-align:left;">
+What meal traumatized you as a kid?
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+AskReddit
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.73
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+223
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a rel="noopener" href="https://www.reddit.com/r/AskReddit/comments/ywh3op/what_forbidden_or_secret_technique_do_you_know/" class="uri">https://www.reddit.com/r/AskReddit/comments/ywh3op/what_forbidden_or_secret_technique_do_you_know/</a>
+</td>
+<td style="text-align:left;">
+Introsium
+</td>
+<td style="text-align:left;">
+11/16/2022
+</td>
+<td style="text-align:right;">
+1668565702
+</td>
+<td style="text-align:left;">
+What forbidden or secret technique do you know?
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+AskReddit
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+139
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a rel="noopener" href="https://www.reddit.com/r/AskReddit/comments/yw9jsg/how_do_you_ask_for_sex/" class="uri">https://www.reddit.com/r/AskReddit/comments/yw9jsg/how_do_you_ask_for_sex/</a>
+</td>
+<td style="text-align:left;">
+throwawaymybutt12526
+</td>
+<td style="text-align:left;">
+11/15/2022
+</td>
+<td style="text-align:right;">
+1668546349
+</td>
+<td style="text-align:left;">
+How do you ask for sex?
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+AskReddit
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.66
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+322
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level1">
+<h1>Data Exploration</h1>
+<p>We removed any links in the text since these would not be useful for
+our model.</p>
+<pre class="r"><code>cleaned_dataset &lt;- raw_data %&gt;%
+  mutate(Title = str_replace_all(Title,  &quot;&lt;.+&gt;&quot;, &quot; &quot;)) %&gt;%
+  mutate(Title = str_replace_all(Title,  &quot;\\W&quot;, &quot; &quot;)) %&gt;%
+  mutate(Title = str_replace_all(Title,  &quot;www|https|http&quot;, &quot; &quot;)) %&gt;%
+  mutate(Text = str_replace_all(Text,  &quot;&lt;.+&gt;&quot;, &quot; &quot;)) %&gt;%
+  mutate(Text = str_replace_all(Text,  &quot;\\W&quot;, &quot; &quot;)) %&gt;%
+  mutate(Text = str_replace_all(Text,  &quot;www|https|http&quot;, &quot; &quot;))</code></pre>
+</div>
+<div class="section level1">
+<h1>Overview of the cleaned dataset</h1>
+<pre class="r"><code>kbl(cleaned_dataset[1:5,]) %&gt;%
+
+  kable_material_dark(&quot;hover&quot;,bootstrap_options = &quot;striped&quot;, full_width = F)</code></pre>
+<table class="lightable-material-dark lightable-hover" style="font-family: &quot;Source Sans Pro&quot;, helvetica, sans-serif;width: auto !important;margin-left: auto;margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+URL
+</th>
+<th style="text-align:left;">
+Author
+</th>
+<th style="text-align:left;">
+Date
+</th>
+<th style="text-align:right;">
+Timestamp
+</th>
+<th style="text-align:left;">
+Title
+</th>
+<th style="text-align:left;">
+Text
+</th>
+<th style="text-align:left;">
+Subreddit
+</th>
+<th style="text-align:right;">
+Score
+</th>
+<th style="text-align:right;">
+Upvotes
+</th>
+<th style="text-align:right;">
+Downvotes
+</th>
+<th style="text-align:right;">
+Up_ratio
+</th>
+<th style="text-align:right;">
+Total_awards_received
+</th>
+<th style="text-align:right;">
+Golds
+</th>
+<th style="text-align:right;">
+Cross_posts
+</th>
+<th style="text-align:right;">
+Comments
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+<a rel="noopener" href="https://www.reddit.com/r/AskReddit/comments/z3ke98/if_a_man_or_women_proposes_to_their_partner_and/" class="uri">https://www.reddit.com/r/AskReddit/comments/z3ke98/if_a_man_or_women_proposes_to_their_partner_and/</a>
+</td>
+<td style="text-align:left;">
+BaIIZDeepInUrMom
+</td>
+<td style="text-align:left;">
+11/24/2022
+</td>
+<td style="text-align:right;">
+1669297614
+</td>
+<td style="text-align:left;">
+If a man or women proposes to their partner and they say no where does
+the relationship go from there
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+AskReddit
+</td>
+<td style="text-align:right;">
+31
+</td>
+<td style="text-align:right;">
+31
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.81
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+66
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a rel="noopener" href="https://www.reddit.com/r/AskReddit/comments/yze4oh/whats_the_next_common_everyday_thing_society_will/" class="uri">https://www.reddit.com/r/AskReddit/comments/yze4oh/whats_the_next_common_everyday_thing_society_will/</a>
+</td>
+<td style="text-align:left;">
+Independent-Choice-4
+</td>
+<td style="text-align:left;">
+11/19/2022
+</td>
+<td style="text-align:right;">
+1668870939
+</td>
+<td style="text-align:left;">
+What s the next common every day thing society will realize is killing
+us like how cigarettes were once deemed healthy
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+AskReddit
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.70
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+172
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a rel="noopener" href="https://www.reddit.com/r/AskReddit/comments/yzc568/what_meal_traumatized_you_as_a_kid/" class="uri">https://www.reddit.com/r/AskReddit/comments/yzc568/what_meal_traumatized_you_as_a_kid/</a>
+</td>
+<td style="text-align:left;">
+LoneShark81
+</td>
+<td style="text-align:left;">
+11/19/2022
+</td>
+<td style="text-align:right;">
+1668865322
+</td>
+<td style="text-align:left;">
+What meal traumatized you as a kid
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+AskReddit
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.73
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+223
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a rel="noopener" href="https://www.reddit.com/r/AskReddit/comments/ywh3op/what_forbidden_or_secret_technique_do_you_know/" class="uri">https://www.reddit.com/r/AskReddit/comments/ywh3op/what_forbidden_or_secret_technique_do_you_know/</a>
+</td>
+<td style="text-align:left;">
+Introsium
+</td>
+<td style="text-align:left;">
+11/16/2022
+</td>
+<td style="text-align:right;">
+1668565702
+</td>
+<td style="text-align:left;">
+What forbidden or secret technique do you know
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+AskReddit
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.80
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+139
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a rel="noopener" href="https://www.reddit.com/r/AskReddit/comments/yw9jsg/how_do_you_ask_for_sex/" class="uri">https://www.reddit.com/r/AskReddit/comments/yw9jsg/how_do_you_ask_for_sex/</a>
+</td>
+<td style="text-align:left;">
+throwawaymybutt12526
+</td>
+<td style="text-align:left;">
+11/15/2022
+</td>
+<td style="text-align:right;">
+1668546349
+</td>
+<td style="text-align:left;">
+How do you ask for sex
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+AskReddit
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:right;">
+33
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0.66
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+322
+</td>
+</tr>
+</tbody>
+</table>
+<p>The next step was to add the column for what posts are popular. We
+decided to mark any post that has more than 1000 upvotes and 500
+comments as popular.</p>
+<pre class="r"><code>cleaned_dataset&lt;-cleaned_dataset %&gt;%
+  mutate(Popular = ifelse(
+    ((Upvotes &gt;= 1000) &amp; 
+       (Comments &gt;= 500)),
+    1, 0 
+  ))</code></pre>
+<p>When we look at the total number of popular posts vs not popular we
+can see that the data is skewed.</p>
+<pre class="r"><code>post_totals = as.data.frame(table(cleaned_dataset$Popular)) 
+ggplot(post_totals, aes(x=Var1, y=Freq, color=Var1)) + 
+  geom_bar(stat = &quot;identity&quot;, aes(color = Var1),fill = &quot;#1f3754&quot;
+
+) +
+  xlab(&quot;Not Popular or Popular&quot;) +
+  ylab(&quot;Number of Posts&quot;) +
+  ggtitle(&quot;Total Post Types&quot;, subtitle = waiver()) </code></pre>
+<p><img src="javascript://" width="672"/></p>
+<p>This is not ideal as we would like the data to be balanced in order
+to best train our model. However due to the nature of the problem this
+is unlikely to be easily scraped. One notable column in the raw data is
+the comments column. It signifies how many comments were on the post
+after a few days. A high number of comments is a good sign that the post
+has lots of user engagement and is popular.</p>
+<pre class="r"><code>cleaned_dataset %&gt;%
+  group_by(Date)%&gt;%
+  summarize(Comments) %&gt;%
+  ggplot(aes(Date, Comments)) +
+  geom_line() +
+   theme(axis.text.x=element_text(angle = 45, vjust = 0.5)) +
+  theme(plot.title = element_text(hjust = 0.5), legend.position = &quot;bottom&quot;) +
+  labs(title = &quot;Comments Timeline&quot;) </code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;Date&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<p><img src="javascript://" width="672"/></p>
+<p>We can see that based on this graph the date/time does have some
+influence on how much engagement a post gets. We can also look at the
+distribution of post numbers across the subreddits that we scraped.</p>
+<pre class="r"><code>post_plot&lt;- cleaned_dataset %&gt;% 
+  group_by(Subreddit)%&gt;%
+  summarize(URL=n()) %&gt;% 
+  ggplot(aes(Subreddit, URL)) + 
+  theme(axis.text.x=element_text(angle = 45, vjust = 0.5)) +
+  theme(plot.title = element_text(hjust = 0.5), legend.position = &quot;bottom&quot;) +
+  geom_col()
+  
+
+post_plot</code></pre>
+<p><img src="javascript://" width="672"/></p>
+<p>The last piece of info that we can look at is the user that submitted
+the post. Below we create a dataframe of users that created the post we
+scraped, with the total number of posts that they created during our
+time of scraping.</p>
+<pre class="r"><code>user_df &lt;- cleaned_dataset %&gt;%
+  group_by(Author) %&gt;%
+  count(URL, name=&quot;Num_of_Posts&quot;) %&gt;%
+  arrange(desc(Num_of_Posts))</code></pre>
+<pre class="r"><code>kbl(user_df[1:5,]) %&gt;%
+
+  kable_paper(&quot;hover&quot;,bootstrap_options = &quot;striped&quot;, full_width = F)</code></pre>
+<table class="lightable-paper lightable-hover" style="font-family: &quot;Arial Narrow&quot;, arial, helvetica, sans-serif;width: auto !important;margin-left: auto;margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Author
+</th>
+<th style="text-align:left;">
+URL
+</th>
+<th style="text-align:right;">
+Num_of_Posts
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+———-_______—
+</td>
+<td style="text-align:left;">
+<a rel="noopener" href="https://www.reddit.com/r/videos/comments/z5lcrt/running_lego_engines_with_air/" class="uri">https://www.reddit.com/r/videos/comments/z5lcrt/running_lego_engines_with_air/</a>
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+—–iMartijn—–
+</td>
+<td style="text-align:left;">
+<a rel="noopener" href="https://www.reddit.com/r/news/comments/z75tkb/chinese_bots_flood_twitter_in_attempt_to_obscure/" class="uri">https://www.reddit.com/r/news/comments/z75tkb/chinese_bots_flood_twitter_in_attempt_to_obscure/</a>
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+—Loading—
+</td>
+<td style="text-align:left;">
+<a rel="noopener" href="https://www.reddit.com/r/mildlyinteresting/comments/yyvmqp/this_piece_of_ground_looking_like_a_mossy_canyon/" class="uri">https://www.reddit.com/r/mildlyinteresting/comments/yyvmqp/this_piece_of_ground_looking_like_a_mossy_canyon/</a>
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+–5-
+</td>
+<td style="text-align:left;">
+<a rel="noopener" href="https://www.reddit.com/r/aww/comments/ykyap1/collateral_damage/" class="uri">https://www.reddit.com/r/aww/comments/ykyap1/collateral_damage/</a>
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+–dany–
+</td>
+<td style="text-align:left;">
+<a rel="noopener" href="https://www.reddit.com/r/gaming/comments/ymxnxj/the_happiest_gamers_happiest_day/" class="uri">https://www.reddit.com/r/gaming/comments/ymxnxj/the_happiest_gamers_happiest_day/</a>
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level1">
+<h1>Preparing the data for the model</h1>
+<p>We prepared the data for our model. Since it is text data we
+tokenized it and created embeddings for the data.</p>
+<pre class="r"><code>max_words &lt;- 10000 
+maxlen_title &lt;- 100 
+maxlen_text &lt;- 300 
+
+training_samples &lt;- 5000 
+validation_samples &lt;- 5000</code></pre>
+<p>We used the title of the posts and marked the Popular column as our
+label.</p>
+<pre class="r"><code>tokenizer_title &lt;- text_tokenizer(num_words = max_words) %&gt;%
+  fit_text_tokenizer(cleaned_dataset$Title)
+
+
+tokenizer_text &lt;- text_tokenizer(num_words = max_words) %&gt;%
+  fit_text_tokenizer(cleaned_dataset$Text)
+
+sequences_title &lt;- texts_to_sequences(tokenizer_title, cleaned_dataset$Title)
+word_index = tokenizer_title$word_index
+
+sequences_text &lt;- texts_to_sequences(tokenizer_text, cleaned_dataset$Text)
+word_index_text = tokenizer_text$word_index</code></pre>
+<pre class="r"><code>cat(&quot;Found&quot;, length(word_index), &quot;unique tokens in the titles.\n&quot;)</code></pre>
+<pre><code>## Found 26909 unique tokens in the titles.</code></pre>
+<pre class="r"><code>cat(&quot;Found&quot;, length(word_index_text), &quot;unique tokens in the text.\n&quot;)</code></pre>
+<pre><code>## Found 25132 unique tokens in the text.</code></pre>
+<pre class="r"><code>data_title &lt;- pad_sequences(sequences_title, maxlen = maxlen_title)
+data_text &lt;- pad_sequences(sequences_text, maxlen = maxlen_text)</code></pre>
+<pre class="r"><code>labels &lt;- as.array(cleaned_dataset$Popular)
+cat(&quot;Shape of data tensor for title (Num Docs, Num Words in a Doc):&quot;, dim(data_title), &quot;\n&quot;)</code></pre>
+<pre><code>## Shape of data tensor for title (Num Docs, Num Words in a Doc): 20459 100</code></pre>
+<pre class="r"><code>cat(&quot;Shape of data tensor for text (Num Docs, Num Words in a Doc):&quot;, dim(data_text), &quot;\n&quot;)</code></pre>
+<pre><code>## Shape of data tensor for text (Num Docs, Num Words in a Doc): 20459 300</code></pre>
+<pre class="r"><code>cat(&#39;Shape of label tensor (Num Docs):&#39;, dim(labels), &quot;\n&quot;)</code></pre>
+<pre><code>## Shape of label tensor (Num Docs): 20459</code></pre>
+<p>Now that the data is prepped we can create our training and
+validation sets from the data.</p>
+<pre class="r"><code>set.seed(123)
+indices &lt;- sample(1:nrow(data_title))
+training_indices &lt;- indices[1:training_samples]
+validation_indices &lt;- indices[(training_samples + 1):
+                                (training_samples + validation_samples)]</code></pre>
+<pre class="r"><code>x_train_title &lt;- data_title[training_indices,]
+y_train &lt;- labels[training_indices]
+x_val_title &lt;- data_title[validation_indices,]
+y_val &lt;- labels[validation_indices]
+
+x_train_text &lt;- data_text[training_indices,]
+x_val_text &lt;- data_text[validation_indices,]
+x_train_timestamp &lt;- cleaned_dataset$Timestamp[training_indices]
+x_val_timestamp &lt;- cleaned_dataset$Timestamp[validation_indices]</code></pre>
+<p>Like many other communities online reddit has developed slang that is
+somewhat unique to it. This is especially true when it comes to specific
+subreddits, which might use acronyms or words that have special meaning
+in those specific community. For these reasons it would be ideal to be
+able to create our own word embeddings, but we do not have the compute
+power or the time it would take to complete this. So we will be using
+pre-trained embeddings from glove to create our embeddings matrix. We
+will be using the 50 dimension embedding vectors from glove.</p>
+<p>Download glove.6B.zip from <a rel="noopener" href="https://nlp.stanford.edu/projects/glove/" class="uri">https://nlp.stanford.edu/projects/glove/</a> or download
+from google drive link <a rel="noopener" href="https://drive.google.com/drive/folders/17fV6YEcqwpexNeCGEseV8T-ZbXBk1f_v?usp=share_link" class="uri">https://drive.google.com/drive/folders/17fV6YEcqwpexNeCGEseV8T-ZbXBk1f_v?usp=share_link</a></p>
+<pre class="r"><code>glove_dir = &quot;glove.6B&quot;
+lines &lt;- readLines(file.path(glove_dir, &quot;glove.6B.50d.txt&quot;))
+embeddings_index &lt;- new.env(hash = TRUE, parent = emptyenv())
+for (i in 1:49000) {
+  line &lt;- lines[[i]]
+  values &lt;- strsplit(line, &quot; &quot;)[[1]]
+  word &lt;- values[[1]]
+  embeddings_index[[word]] &lt;- as.double(values[-1])
+}
+cat(&quot;Found&quot;, length(embeddings_index), &quot;word vectors.\n&quot;)</code></pre>
+<pre><code>## Found 49000 word vectors.</code></pre>
+<pre class="r"><code>embedding_dim &lt;- 50
+embedding_matrix &lt;- array(0, dim = c(max_words, embedding_dim))
+for (word in names(word_index)) { # for every word
+  index &lt;- word_index[[word]] # get its index
+  if (index &lt; max_words) { # only consider the top 10k words
+    # get the word&#39;s embedding vector from GloVe
+    embedding_vector &lt;- embeddings_index[[word]]
+    if (!is.null(embedding_vector)) { # if GloVe has the embedding vector
+      # index 1 isn&#39;t supposed to stand for any word or token
+      # --it&#39;s a placeholder. So we skip 1 here:
+      embedding_matrix[index+1,] &lt;- embedding_vector
+    }
+  }
+}</code></pre>
+</div>
+<div class="section level1">
+<h1>Model Procedure</h1>
+<pre class="r"><code>model &lt;- keras_model_sequential() %&gt;%
+  layer_embedding(input_dim = max_words,
+                  input_length = maxlen_title,
+                  output_dim = embedding_dim) %&gt;%
+  layer_flatten() %&gt;%
+  layer_dense(units = 32, activation = &quot;relu&quot;) %&gt;%
+  layer_dense(units = 1, activation = &quot;sigmoid&quot;)
+summary(model)</code></pre>
+<pre><code>## Model: &quot;sequential&quot;
+## ________________________________________________________________________________
+##  Layer (type)                       Output Shape                    Param #     
+## ================================================================================
+##  embedding (Embedding)              (None, 100, 50)                 500000      
+##  flatten (Flatten)                  (None, 5000)                    0           
+##  dense_1 (Dense)                    (None, 32)                      160032      
+##  dense (Dense)                      (None, 1)                       33          
+## ================================================================================
+## Total params: 660,065
+## Trainable params: 660,065
+## Non-trainable params: 0
+## ________________________________________________________________________________</code></pre>
+<pre class="r"><code>get_layer(model, index = 1) %&gt;% # manually configure the embedding layer
+  set_weights(list(embedding_matrix)) %&gt;% # set the weights based on GloVe
+  freeze_weights() # do not update the weights in this layer anymore
+model %&gt;% compile(
+  optimizer = &quot;adam&quot;,
+  loss = &quot;binary_crossentropy&quot;,
+  metrics = c(&quot;accuracy&quot;)
+)
+
+history &lt;- model %&gt;% fit(
+  x_train_title, y_train,
+  epochs = 20,
+  batch_size = 32,
+  validation_data = list(x_val_title, y_val)
+)</code></pre>
+<pre class="r"><code>plot(history)</code></pre>
+<p><img src="javascript://" width="672"/></p>
+</div>
+<div class="section level1">
+<h1>Model1 - Simple RNN</h1>
+<p>A recurrent neural network (RNN) is a class of artificial neural
+networks where connections between nodes can create a cycle, allowing
+output from some nodes to affect subsequent input to the same nodes.
+This allows it to exhibit temporal dynamic behavior. Derived from
+feedforward neural networks, RNNs can use their internal state (memory)
+to process variable length sequences of inputs. This makes them
+applicable to tasks such as unsegmented, connected handwriting
+recognition or speech recognition . Recurrent neural networks are
+theoretically Turing complete and can run arbitrary programs to process
+arbitrary sequences of inputs.</p>
+<pre class="r"><code>modelSimpleRNN &lt;- keras_model_sequential() %&gt;%
+  layer_embedding(input_dim = max_words,
+                  input_length = maxlen_title,
+                  output_dim = embedding_dim) %&gt;%
+  layer_simple_rnn(units = 32) %&gt;%
+  layer_dense(units = 1, activation = &quot;sigmoid&quot;)
+
+modelSimpleRNN  %&gt;% compile(
+  optimizer = &quot;adam&quot;,
+  loss = &quot;binary_crossentropy&quot;,
+  metrics = c(&quot;accuracy&quot;)
+)
+historySimpleRNN &lt;- modelSimpleRNN  %&gt;% fit(
+  x_train_title, y_train,
+  epochs = 10,
+  batch_size = 32,
+  validation_split = 0.2
+)</code></pre>
+</div>
+<div class="section level1">
+<h1>Model Result - Simple RNN</h1>
+<p>The Simple RNN model is able to achieve almost 96% accuracy on the
+training data and 86% on the validation data with a loss of 39%.</p>
+<pre class="r"><code>plot(historySimpleRNN)</code></pre>
+<p><img src="javascript://" width="672"/></p>
+</div>
+<div class="section level1">
+<h1>Model2 - RNN with LSTM</h1>
+<p>Long short-term memory (LSTM) networks are an extension of RNN that
+extend the memory. LSTM are used as the building blocks for the layers
+of a RNN. LSTMs assign data “weights” which helps RNNs to either let new
+information in, forget information or give it importance enough to
+impact the output.</p>
+<pre class="r"><code>modelLSTM &lt;- keras_model_sequential() %&gt;%
+  layer_embedding(input_dim = max_words,
+                  input_length = maxlen_title,
+                  output_dim = embedding_dim) %&gt;%
+  layer_lstm(units = 32) %&gt;%
+  layer_dense(units = 1, activation = &quot;sigmoid&quot;)
+
+modelLSTM %&gt;% compile(
+  optimizer = &quot;adam&quot;,
+  loss = &quot;binary_crossentropy&quot;,
+  metrics = c(&quot;accuracy&quot;)
+)
+historyLSTM &lt;- modelLSTM %&gt;% fit(
+  x_train_title, y_train,
+  epochs = 10,
+  batch_size = 32,
+  validation_split = 0.2
+)</code></pre>
+</div>
+<div class="section level1">
+<h1>Model Result - RNN with LSTM</h1>
+<p>The RNN with LSTM model is able to achieve almost 99% accuracy on the
+training data and 86% on the validation data with a loss of 66%.</p>
+<pre class="r"><code>plot(historyLSTM)</code></pre>
+<p><img src="javascript://" width="672"/></p>
+</div>
+<div class="section level1">
+<h1>Model 3: RNN - Bidirectional LSTM</h1>
+<p>A Bidirectional LSTM, or biLSTM, is a sequence processing model that
+consists of two LSTMs: one taking the input in a forward direction, and
+the other in a backwards direction. BiLSTMs effectively increase the
+amount of information available to the network, improving the context
+available to the algorithm (e.g.&#160;knowing what words immediately follow
+and precede a word in a sentence).</p>
+<pre class="r"><code>modelBidirectionalLSTM &lt;- keras_model_sequential()%&gt;%
+  layer_embedding(input_dim = max_words,
+                  input_length = maxlen_title,
+                  output_dim = embedding_dim)%&gt;%
+  bidirectional(
+    layer_lstm(units = 32)
+  ) %&gt;%
+  layer_dense(units = 1, activation = &quot;sigmoid&quot;)
+
+modelBidirectionalLSTM %&gt;% compile(
+  optimizer = &quot;adam&quot;,
+  loss = &quot;binary_crossentropy&quot;,
+  metrics = c(&quot;accuracy&quot;)
+)
+
+historyBidirectionalLSTM &lt;- modelBidirectionalLSTM %&gt;% fit(
+  x_train_title, y_train,
+  epochs = 10,
+  batch_size = 32,
+  validation_split = 0.2
+)</code></pre>
+</div>
+<div class="section level1">
+<h1>Model Result - RNN with Bidirectional LSTM</h1>
+<p>The RNN with Bidirectional LSTM model is able to achieve almost 99%
+accuracy on the training data and 87% on the validation data with a loss
+of 72%.</p>
+<pre class="r"><code>plot(historyBidirectionalLSTM)</code></pre>
+<p><img src="javascript://" width="672"/></p>
+<p>We tried a few model configurations and found that they all had
+roughly the same accuracy, with varying loss factors.Almost all of the
+models hovered around a certain accuracy.</p>
+<p>Based on these various factors we feel like we have achieved quite a
+good model. Through this model we can see that RNN, especially with
+bidirectional lstm layers, can be quite useful in tackling NLP
+problems.</p>
+</div>
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script type="module" src="https://s.brightspace.com/lib/bsi/20.22.12-222/unbundled/mathjax.js"></script><script type="text/javascript">document.addEventListener('DOMContentLoaded', function() {
+					if (document.querySelector('math') || /\$\$|\\\(|\\\[|\\begin{|\\ref{|\\eqref{/.test(document.body.innerHTML)) {
+						document.querySelectorAll('mspace[linebreak="newline"]').forEach(elm => {
+							elm.setAttribute('style', 'display: block; height: 0.5rem;');
+						});
+
+						window.D2L.MathJax.loadMathJax({
+							'outputScale': 1.3,
+							'renderLatex': false
+						});
+					}
+				});</script><script type="module" src="https://s.brightspace.com/lib/bsi/20.22.12-222/unbundled/prism.js"></script><script type="text/javascript">document.addEventListener('DOMContentLoaded', function() {
+					document.querySelectorAll('.d2l-code').forEach(code => {
+						window.D2L.Prism.formatCodeElement(code);
+					});
+				});</script></body></html>
